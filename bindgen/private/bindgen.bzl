@@ -113,6 +113,8 @@ def _generate_cc_link_build_info(ctx, cc_lib):
     linker_flags = []
     linker_search_paths = []
 
+    rust_toolchain = ctx.toolchains[str(Label("//rust:toolchain_type"))]
+
     for linker_input in cc_lib[CcInfo].linking_context.linker_inputs.to_list():
         for lib in linker_input.libraries:
             if lib.static_library:
@@ -124,7 +126,9 @@ def _generate_cc_link_build_info(ctx, cc_lib):
                 linker_search_paths.append(lib.pic_static_library.dirname)
                 compile_data.append(lib.pic_static_library)
 
-        if linker_input.user_link_flags:
+        if rust_toolchain._experimental_use_cc_common_link:
+            linker_flags.extend(linker_input.user_link_flags)
+        elif linker_input.user_link_flags:
             linker_flags.append("-C")
             linker_flags.append("link-args={}".format(" ".join(linker_input.user_link_flags)))
 
